@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
 const Person = require('./models/person')
+const path = require('path')
 
 const app = express()
 
@@ -45,16 +46,10 @@ app.delete('/api/persons/:id', (req, res, next) => {
 
 app.post('/api/persons', (req, res, next) => {
   const body = req.body
-
   if (!body.name || !body.number) {
     return res.status(400).json({ error: 'name and number required' })
   }
-
-  const entry = new Person({
-    name: body.name,
-    number: body.number
-  })
-
+  const entry = new Person({ name: body.name, number: body.number })
   entry.save()
     .then(saved => res.json(saved))
     .catch(err => next(err))
@@ -71,13 +66,13 @@ app.put('/api/persons/:id', (req,res,next) => {
   .catch(err => next(err))
 })
 
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'build', 'index.html'))
+})
+
 const errorHandler = (err, req, res, next) => {
-  if (err.name === 'CastError') {
-    return res.status(400).send({ error: 'malformed id' })
-  }
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ error: err.message })
-  }
+  if (err.name === 'CastError') return res.status(400).send({ error: 'malformed id' })
+  if (err.name === 'ValidationError') return res.status(400).json({ error: err.message })
   next(err)
 }
 
@@ -87,3 +82,6 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log('Server running on', PORT)
 })
+
+
+
